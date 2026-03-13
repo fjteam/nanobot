@@ -353,6 +353,12 @@ class ToolsConfig(Base):
     mcp_servers: dict[str, MCPServerConfig] = Field(default_factory=dict)
 
 
+class CLIConfig(Base):
+    """CLI interface configuration."""
+
+    show_tool_calls: bool = True  # Show tool call hints in CLI after "thinking..."
+
+
 class Config(BaseSettings):
     """Root configuration for nanobot."""
 
@@ -361,6 +367,7 @@ class Config(BaseSettings):
     providers: ProvidersConfig = Field(default_factory=ProvidersConfig)
     gateway: GatewayConfig = Field(default_factory=GatewayConfig)
     tools: ToolsConfig = Field(default_factory=ToolsConfig)
+    cli: CLIConfig = Field(default_factory=CLIConfig)
 
     @property
     def workspace_path(self) -> Path:

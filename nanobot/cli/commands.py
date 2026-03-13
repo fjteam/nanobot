@@ -596,11 +596,15 @@ def agent(
         return console.status("[dim]nanobot is thinking...[/dim]", spinner="dots")
 
     async def _cli_progress(content: str, *, tool_hint: bool = False) -> None:
-        ch = agent_loop.channels_config
-        if ch and tool_hint and not ch.send_tool_hints:
-            return
-        if ch and not tool_hint and not ch.send_progress:
-            return
+        if tool_hint:
+            # Use CLI-specific config for tool calls
+            if not config.cli.show_tool_calls:
+                return
+        else:
+            # For regular progress (thoughts), respect channels.send_progress
+            ch = agent_loop.channels_config
+            if ch and not ch.send_progress:
+                return
         console.print(f"  [dim]↳ {content}[/dim]")
 
     if message:
@@ -651,13 +655,16 @@ def agent(
                         msg = await asyncio.wait_for(bus.consume_outbound(), timeout=1.0)
                         if msg.metadata.get("_progress"):
                             is_tool_hint = msg.metadata.get("_tool_hint", False)
-                            ch = agent_loop.channels_config
-                            if ch and is_tool_hint and not ch.send_tool_hints:
-                                pass
-                            elif ch and not is_tool_hint and not ch.send_progress:
-                                pass
+                            if is_tool_hint:
+                                # Use CLI-specific config for tool calls
+                                if not config.cli.show_tool_calls:
+                                    continue
                             else:
-                                await _print_interactive_line(msg.content)
+                                # For regular progress (thoughts), respect channels.send_progress
+                                ch = agent_loop.channels_config
+                                if ch and not ch.send_progress:
+                                    continue
+                            await _print_interactive_line(msg.content)
 
                         elif not turn_done.is_set():
                             if msg.content:
